@@ -1,26 +1,44 @@
-import torch
+"""Extract CLIP and DINOv2 embeddings for the COCO subset images and save them.
+
+Run from the repository root:
+    python scripts/dataset_embedding_extraction.py
+
+Reads:  data/images/
+Writes: embeddings/clip_embeddings.pt, embeddings/dino_embeddings.pt
+"""
+
+import os
+
 import clip
-from utils import get_clip_embeddings, get_dino_embeddings
-from transformers import AutoProcessor, AutoModel
-# This script extracts CLIP and DINO embeddings for images in a dataset directory and saves them.
+import torch
+from transformers import AutoModel, AutoProcessor
 
-device = "mps" if torch.backends.mps.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/32", device=device)
+from utils import get_clip_embeddings, get_device, get_dino_embeddings
 
+IMAGE_DIR = "data/images"
+OUTPUT_DIR = "embeddings"
+CLIP_MODEL = "ViT-B/32"
+DINO_MODEL = "facebook/dinov2-base"
+
+device = get_device()
+print(f"Using device: {device}")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+# --- CLIP ---
 print("Starting CLIP embedding extraction...")
-clip_embeddings = get_clip_embeddings(preprocess=preprocess, model=model, device=device, image_dir="data/images")
+clip_model, preprocess = clip.load(CLIP_MODEL, device=device)
+clip_embeddings = get_clip_embeddings(
+    preprocess=preprocess, model=clip_model, device=device, image_dir=IMAGE_DIR
+)
+torch.save(clip_embeddings, os.path.join(OUTPUT_DIR, "clip_embeddings.pt"))
+print("CLIP embeddings saved.")
 
-print("Saving embeddings to files...")
-torch.save(clip_embeddings, "embeddings/clip_embeddings.pt")
-print("Embedding extraction and saving completed.")
-
-processor = AutoProcessor.from_pretrained("facebook/dinov2-base")
-model = AutoModel.from_pretrained("facebook/dinov2-base").to(device)
-
-
+# --- DINO ---
 print("Starting DINO embedding extraction...")
-dino_embeddings = get_dino_embeddings(processor=processor, model=model, device=device, image_dir="data/images")
-
-print("Saving embeddings to files...")
-torch.save(dino_embeddings, "embeddings/dino_embeddings.pt")
-print("Embeddings saved successfully.")
+processor = AutoProcessor.from_pretrained(DINO_MODEL)
+dino_model = AutoModel.from_pretrained(DINO_MODEL).to(device)
+dino_embeddings = get_dino_embeddings(
+    processor=processor, model=dino_model, device=device, image_dir=IMAGE_DIR
+)
+torch.save(dino_embeddings, os.path.join(OUTPUT_DIR, "dino_embeddings.pt"))
+print("DINO embeddings saved.")

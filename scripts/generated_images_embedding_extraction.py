@@ -1,34 +1,56 @@
-import torch
+"""Extract CLIP and DINOv2 embeddings for the Stable Diffusion generated images.
+
+Run from the repository root:
+    python scripts/generated_images_embedding_extraction.py
+
+Reads:  generated_images/v1-5/ and generated_images/v2-1/
+Writes: embeddings/{clip,dino}_embeddings_v1-5.pt
+        embeddings/{clip,dino}_embeddings_v2-1.pt
+"""
+
+import os
+
 import clip
-from utils import get_clip_embeddings, get_dino_embeddings
-from transformers import AutoProcessor, AutoModel
+import torch
+from transformers import AutoModel, AutoProcessor
 
-# This script extracts CLIP and DINO embeddings for images in a generated images directory and saves them.
+from utils import get_clip_embeddings, get_device, get_dino_embeddings
 
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+SD_VERSIONS = ["v1-5", "v2-1"]  # one folder of generated images per Stable Diffusion version
+IMAGE_ROOT = "generated_images"
+OUTPUT_DIR = "embeddings"
+CLIP_MODEL = "ViT-B/32"
+DINO_MODEL = "facebook/dinov2-base"
 
-processor = AutoProcessor.from_pretrained("facebook/dinov2-base")
-model = AutoModel.from_pretrained("facebook/dinov2-base").to(device)
+device = get_device()
+print(f"Using device: {device}")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+# --- DINO ---
+processor = AutoProcessor.from_pretrained(DINO_MODEL)
+dino_model = AutoModel.from_pretrained(DINO_MODEL).to(device)
 
-# Process generated_images/v1-5
-print("Processing DINO embeddings for generated_images/v1-5...")
-dino_embeddings_v1 = get_dino_embeddings(processor=processor, model=model, device=device, image_dir="generated_images/v1-5")
-torch.save(dino_embeddings_v1, "embeddings/dino_embeddings_v1-5.pt")
+for version in SD_VERSIONS:
+    print(f"Processing DINO embeddings for {IMAGE_ROOT}/{version}...")
+    embeddings = get_dino_embeddings(
+        processor=processor,
+        model=dino_model,
+        device=device,
+        image_dir=os.path.join(IMAGE_ROOT, version),
+    )
+    torch.save(embeddings, os.path.join(OUTPUT_DIR, f"dino_embeddings_{version}.pt"))
 
-# Process generated_images/v2-1
-print("Processing DINO embeddings for generated_images/v2-1...")
-dino_embeddings_v2 = get_dino_embeddings(processor=processor, model=model, device=device, image_dir="generated_images/v2-1")
-torch.save(dino_embeddings_v2, "embeddings/dino_embeddings_v2-1.pt")
+# --- CLIP ---
+clip_model, preprocess = clip.load(CLIP_MODEL, device=device)
 
-# Process generated_images/v1-5
-print("Processing CLIP embeddings for generated_images/v1-5...")
-model, preprocess = clip.load("ViT-B/32", device=device)
-clip_embeddings_v1 = get_clip_embeddings(preprocess=preprocess, model=model, device=device, image_dir="generated_images/v1-5")
-torch.save(clip_embeddings_v1, "embeddings/clip_embeddings_v1-5.pt")
+for version in SD_VERSIONS:
+    print(f"Processing CLIP embeddings for {IMAGE_ROOT}/{version}...")
+    embeddings = get_clip_embeddings(
+        preprocess=preprocess,
+        model=clip_model,
+        device=device,
+        image_dir=os.path.join(IMAGE_ROOT, version),
+    )
+    torch.save(embeddings, os.path.join(OUTPUT_DIR, f"clip_embeddings_{version}.pt"))
 
-# Process generated_images/v2-1
-print("Processing CLIP embeddings for generated_images/v2-1...")
-clip_embeddings_v2 = get_clip_embeddings(preprocess=preprocess, model=model, device=device, image_dir="generated_images/v2-1")
-torch.save(clip_embeddings_v2, "embeddings/clip_embeddings_v2-1.pt")
 print("All embeddings processed and saved successfully.")
