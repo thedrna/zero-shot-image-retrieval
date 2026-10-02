@@ -1,27 +1,28 @@
-# Core dependencies
+# Developed with Python 3.11
+# Install with:  pip install -r requirements.txt
+# (git must be installed, because CLIP is installed from GitHub)
+
+# --- Core: embedding extraction and retrieval (scripts/) ---
 torch>=2.0.0
 torchvision>=0.15.0
-Pillow>=9.0.0
 numpy>=1.22.0
-requests>=2.28.0
+Pillow>=9.0.0
 tqdm>=4.64.0
 
-# CLIP model
+# CLIP (OpenAI), model ViT-B/32
 git+https://github.com/openai/CLIP.git
 
-# DINO model
-transformers>=4.26.0
+# DINOv2 (facebook/dinov2-base) via Hugging Face
+transformers>=4.35.0
 
-# Diffusion models
+# --- Dataset creation (scripts/dataset_creation.py) ---
+requests>=2.28.0
+pycocotools>=2.0.6
+
+# --- Image generation (notebooks/text_to_image.ipynb) ---
+# Needs a CUDA GPU, e.g. a Google Colab GPU runtime (the notebook installs these itself there)
 diffusers>=0.14.0
 accelerate>=0.18.0
 
-# COCO dataset handling
-pycocotools>=2.0.6
-
-# Jupyter notebook support
+# --- Running the notebook locally ---
 jupyter>=1.0.0
-notebook>=6.5.0
-
-# Optional: for Mac MPS acceleration
-# torch with MPS support is included in the main torch package
