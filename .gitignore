@@ -21,6 +21,7 @@ env/
 coco_data/
 coco_subset/
 *.zip
+subset_annotations.json
 
 # Logs and caches
 *.log
