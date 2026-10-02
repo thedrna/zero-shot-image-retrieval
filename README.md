@@ -20,7 +20,7 @@ This project implements a zero-shot image retrieval system using CLIP and DINO. 
 - `dataset_embedding_extraction.py`: Extracts CLIP and DINO embeddings from the dataset images
 - `generated_images_embedding_extraction.py`: Extracts embeddings from AI-generated images
 - `utils.py`: Contains utility functions for embedding extraction and similarity calculation
-- `text-to-image.ipynb`: Python notebook for generating images from prompts using SD 1-5 and SD 2-1
+- `text_to_image.ipynb`: Python notebook for generating images from prompts using SD 1-5 and SD 2-1
 
 ### Other Files
 

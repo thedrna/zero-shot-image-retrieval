@@ -1,6 +1,6 @@
 import torch
 import json
-from utils import find_top_matchesc
+from utils import find_top_matches
 from tqdm import tqdm
 
 device = "mps" if torch.backends.mps.is_available() else "cpu"
